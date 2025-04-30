@@ -73,6 +73,6 @@ func GetConfigFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fullpath := home + "/workspace/github.com/cryptidcodes/gatorcli/.gatorconfig.json"
+	fullpath := home + "/.gatorconfig.json"
 	return fullpath, nil
 }
