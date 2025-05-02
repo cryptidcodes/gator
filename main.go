@@ -1,14 +1,18 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/cryptidcodes/gatorcli/internal/config"
+	"github.com/cryptidcodes/gatorcli/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 type state struct {
+	db  *database.Queries
 	cfg *config.Config
 }
 
@@ -17,8 +21,16 @@ func main() {
 	if err != nil {
 		println(err)
 	}
+
+	db, err := sql.Open("postgres", cfg.DBURL)
+	if err != nil {
+		log.Fatal("failed to open database")
+	}
+	dbQueries := database.New(db)
+
 	// create a new state
 	s := state{
+		db:  dbQueries,
 		cfg: &cfg,
 	}
 
@@ -29,11 +41,13 @@ func main() {
 
 	// register commands
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
+	cmds.register("users", handlerGetUsers)
 
 	// confirm the user input at least two args. Example: gator login
 	if len(os.Args) < 2 {
-		fmt.Printf("you must input a command to use gator\n")
-		os.Exit(1)
+		log.Fatal("you must input a command to use gator\n")
 	}
 
 	// confirm the command the user is trying to run exists
