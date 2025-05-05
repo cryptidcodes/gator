@@ -44,10 +44,14 @@ func handlerRegister(s *state, cmd command) error {
 	s.db.CreateUser(context.Background(), database.CreateUserParams{ID: newID, CreatedAt: currentTime, UpdatedAt: currentTime, Name: cmd.Args[0]})
 	s.cfg.SetUser(cmd.Args[0])
 	fmt.Println("New user registered!")
-	fmt.Printf("UUID: %v\n", newID)
-	fmt.Printf("CreatedAt: %v\n", currentTime)
-	fmt.Printf("UpdatedAt: %v\n", currentTime)
-	fmt.Printf("Name: %v\n", cmd.Args[0])
+	user, err := s.db.GetUser(context.Background(), cmd.Args[0])
+	if err != nil {
+		return err
+	}
+	fmt.Printf("UUID: %v\n", user.ID)
+	fmt.Printf("CreatedAt: %v\n", user.CreatedAt)
+	fmt.Printf("UpdatedAt: %v\n", user.UpdatedAt)
+	fmt.Printf("Name: %v\n", user.Name)
 	return nil
 }
 
