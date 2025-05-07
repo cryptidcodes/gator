@@ -46,6 +46,9 @@ func main() {
 	cmds.register("users", handlerGetUsers)
 	cmds.register("agg", handlerAgg)
 	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("feeds", handlerFeeds)
+	cmds.register("follow", handlerFollow)
+	cmds.register("following", handlerFollowing)
 
 	// confirm the user input at least two args. Example: gator login
 	if len(os.Args) < 2 {

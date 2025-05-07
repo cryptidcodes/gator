@@ -16,7 +16,7 @@ func handlerLogin(s *state, cmd command) error {
 		return fmt.Errorf("usage: %s <name>", cmd.Name)
 
 	}
-	user, err := s.db.GetUser(context.Background(), cmd.Args[0])
+	user, err := s.db.GetUserByName(context.Background(), cmd.Args[0])
 	if err != nil {
 		log.Fatal("user does not exist!")
 	}
@@ -35,7 +35,7 @@ func handlerRegister(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf("usage: %s <name>", cmd.Name)
 	}
-	user, _ := s.db.GetUser(context.Background(), cmd.Args[0])
+	user, _ := s.db.GetUserByName(context.Background(), cmd.Args[0])
 	if user.Name == cmd.Args[0] {
 		log.Fatal("User already exists!")
 	}
@@ -44,7 +44,7 @@ func handlerRegister(s *state, cmd command) error {
 	s.db.CreateUser(context.Background(), database.CreateUserParams{ID: newID, CreatedAt: currentTime, UpdatedAt: currentTime, Name: cmd.Args[0]})
 	s.cfg.SetUser(cmd.Args[0])
 	fmt.Println("New user registered!")
-	user, err := s.db.GetUser(context.Background(), cmd.Args[0])
+	user, err := s.db.GetUserByName(context.Background(), cmd.Args[0])
 	if err != nil {
 		return err
 	}
