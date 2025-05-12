@@ -31,27 +31,36 @@ func handlerLogin(s *state, cmd command) error {
 }
 
 func handlerRegister(s *state, cmd command) error {
-	// ensure a name was passed as an arg
+	// ensure a single name arg was passed
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf("usage: %s <name>", cmd.Name)
 	}
+
+	// check if user is already registered
 	user, _ := s.db.GetUserByName(context.Background(), cmd.Args[0])
 	if user.Name == cmd.Args[0] {
 		log.Fatal("User already exists!")
 	}
-	newID := uuid.New()
-	currentTime := time.Now()
-	s.db.CreateUser(context.Background(), database.CreateUserParams{ID: newID, CreatedAt: currentTime, UpdatedAt: currentTime, Name: cmd.Args[0]})
-	s.cfg.SetUser(cmd.Args[0])
-	fmt.Println("New user registered!")
-	user, err := s.db.GetUserByName(context.Background(), cmd.Args[0])
-	if err != nil {
-		return err
+
+	// set user parameters
+	params := database.CreateUserParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      cmd.Args[0],
 	}
-	fmt.Printf("UUID: %v\n", user.ID)
-	fmt.Printf("CreatedAt: %v\n", user.CreatedAt)
-	fmt.Printf("UpdatedAt: %v\n", user.UpdatedAt)
-	fmt.Printf("Name: %v\n", user.Name)
+
+	// create the user database entry
+	s.db.CreateUser(context.Background(), params)
+
+	// set the user as currently logged in
+	s.cfg.SetUser(cmd.Args[0])
+
+	fmt.Println("New user registered!")
+	fmt.Printf("UUID: %v\n", params.ID)
+	fmt.Printf("CreatedAt: %v\n", params.CreatedAt)
+	fmt.Printf("UpdatedAt: %v\n", params.UpdatedAt)
+	fmt.Printf("Name: %v\n", params.Name)
 	return nil
 }
 

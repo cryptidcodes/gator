@@ -1,6 +1,11 @@
 package main
 
-import "errors"
+import (
+	"context"
+	"errors"
+
+	"github.com/cryptidcodes/gatorcli/internal/database"
+)
 
 type command struct {
 	Name string
@@ -23,4 +28,15 @@ func (c *commands) run(s *state, cmd command) error {
 func (c *commands) register(name string, f func(*state, command) error) {
 	// registers a new handler function for a command name
 	c.cmdmap[name] = f
+}
+
+func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
+	return func(s *state, cmd command) error {
+		// check if a user is logged in
+		user, err := s.db.GetUserByName(context.Background(), s.cfg.CurrentUserName)
+		if err != nil {
+			return err
+		}
+		return handler(s, cmd, user)
+	}
 }
