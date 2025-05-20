@@ -17,17 +17,18 @@ type state struct {
 }
 
 func main() {
+	println("Gatin'")
 	cfg, err := config.Read()
 	if err != nil {
 		println(err)
 	}
-
+	println("Opening database...")
 	db, err := sql.Open("postgres", cfg.DBURL)
 	if err != nil {
 		log.Fatal("failed to open database")
 	}
 	dbQueries := database.New(db)
-
+	println("Creating state...")
 	// create a new state
 	s := state{
 		db:  dbQueries,
@@ -38,7 +39,7 @@ func main() {
 	cmds := commands{
 		cmdmap: make(map[string]func(*state, command) error),
 	}
-
+	println("Registering commands...")
 	// register commands
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
@@ -50,6 +51,7 @@ func main() {
 	cmds.register("follow", middlewareLoggedIn(handlerFollow))
 	cmds.register("following", middlewareLoggedIn(handlerFollowing))
 	cmds.register("unfollow", middlewareLoggedIn(handlerUnfollow))
+	cmds.register("browse", middlewareLoggedIn(handlerBrowse))
 
 	// confirm the user input at least two args. Example: gator login
 	if len(os.Args) < 2 {
@@ -72,6 +74,7 @@ func main() {
 	if len(os.Args) > 2 {
 		userCmd.Args = os.Args[2:]
 	}
+	println("Running command: ", userCmd.Name)
 	// run the func
 	err = cmds.run(&s, userCmd)
 	if err != nil {

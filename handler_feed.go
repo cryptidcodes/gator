@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/cryptidcodes/gatorcli/internal/database"
@@ -31,28 +32,28 @@ type RSSItem struct {
 }
 
 func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
-	println("Attempting to fetch feed...")
-	println("Creating new HTTP request...")
+	//println("Attempting to fetch feed...")
+	//println("Creating new HTTP request...")
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
 	}
-	println("Setting header...")
+	//println("Setting header...")
 	req.Header.Set("User-Agent", "gator")
 
 	client := &http.Client{}
-	println("Executing HTTP request...")
+	//println("Executing HTTP request...")
 	res, err := client.Do(req)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
 	}
-	println("Reading request data...")
+	//println("Reading request data...")
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
 	}
 	var result RSSFeed
-	println("Unmarshalling...")
+	//println("Unmarshalling...")
 	err = xml.Unmarshal(data, &result)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
@@ -202,14 +203,102 @@ func handlerFollowing(s *state, cmd command, user database.User) error {
 }
 
 func handlerAgg(s *state, cmd command) error {
-	testFeedURL := "https://www.wagslane.dev/index.xml"
-	feed, err := fetchFeed(context.Background(), testFeedURL)
-	println(feed.Channel.Title)
-	println(feed.Channel.Description)
-	for i := 0; i < len(feed.Channel.Item); i++ {
-		println(feed.Channel.Item[i].Title)
-		println(feed.Channel.Item[i].Description)
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("usage: %v {time_between_reqs}: duration string", cmd.Name)
 	}
-	println("Error: ", err)
-	return err
+	// parse the time arg
+	dur, err := time.ParseDuration(cmd.Args[0])
+	if err != nil {
+		return err
+	}
+	ticker := time.NewTicker(dur)
+	for ; ; <-ticker.C {
+		println("Aggin...")
+		scrapeFeeds(s)
+	}
+}
+
+func scrapeFeeds(s *state) {
+	// determine the next feed to fetch
+	dbFeed, err := s.db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// mark the feed as fetched
+	s.db.MarkFeedFetched(context.Background(), dbFeed.ID)
+
+	// fetch current state of feed
+	rssFeed, err := fetchFeed(context.Background(), dbFeed.Url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create posts table entries for any posts that dont have entries already
+	for i := 0; i < len(rssFeed.Channel.Item); i++ {
+		_, err := s.db.GetPostByUrl(context.Background(), rssFeed.Channel.Item[i].Link)
+		if err != nil {
+			println("Creating new post entry...")
+			params := database.CreatePostParams{
+				ID:          uuid.New(),
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+				Title:       rssFeed.Channel.Item[i].Title,
+				Url:         rssFeed.Channel.Item[i].Link,
+				Description: rssFeed.Channel.Item[i].Description,
+				PublishedAt: rssFeed.Channel.Item[i].PubDate,
+				FeedID:      dbFeed.ID,
+			}
+			_, err := s.db.CreatePost(context.Background(), params)
+			if err != nil {
+				println(err)
+			}
+			println(params.Title)
+			println(params.Description)
+		}
+	}
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	// prints posts using GetPostsForUser
+
+	// ensure maximum of 1 arg was passed
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("usage: %v {num_posts}", cmd.Name)
+	}
+
+	// retrieve current user's ID
+	user, err := s.db.GetUserByName(context.Background(), s.cfg.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	// create GetPostsForUser params
+	params := database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  2,
+	}
+
+	// if a limit arg was passed, set the limit parameter to match
+	if len(cmd.Args) == 1 {
+		i, err := strconv.Atoi(cmd.Args[0])
+		if err != nil {
+			return err
+		}
+		params.Limit = int32(i)
+	}
+
+	// get the posts
+	row, err := s.db.GetPostsForUser(context.Background(), params)
+	if err != nil {
+		return err
+	}
+	for i := 0; i < len(row); i++ {
+		println(row[i].Name)
+		println(row[i].Title)
+		println(row[i].PublishedAt)
+		println(row[i].Url)
+		println(row[i].Description)
+	}
+	return nil
 }

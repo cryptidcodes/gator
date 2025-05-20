@@ -15,7 +15,9 @@ type Config struct {
 // Export a Read function that reads the JSON file at ~/.gatorconfig.json and returns a Config struct -
 
 func Read() (Config, error) {
+	println("Getting config file path...")
 	fullpath, err := GetConfigFilePath()
+	println("path: ", fullpath)
 	if err != nil {
 		return Config{}, err
 	}
