@@ -47,8 +47,9 @@ WHERE feed_id = $1 AND user_id = $2;
 -- name: MarkFeedFetched :exec
 UPDATE feeds 
 SET last_fetched_at = NOW(),
-    updatetd_at = NOW()
-WHERE id = $1;
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
 
 -- name: GetNextFeedToFetch :one
 SELECT *

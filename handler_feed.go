@@ -219,42 +219,50 @@ func handlerAgg(s *state, cmd command) error {
 }
 
 func scrapeFeeds(s *state) {
-	// determine the next feed to fetch
-	dbFeed, err := s.db.GetNextFeedToFetch(context.Background())
+	feeds, err := s.db.GetFeeds(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-
-	// mark the feed as fetched
-	s.db.MarkFeedFetched(context.Background(), dbFeed.ID)
-
-	// fetch current state of feed
-	rssFeed, err := fetchFeed(context.Background(), dbFeed.Url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// create posts table entries for any posts that dont have entries already
-	for i := 0; i < len(rssFeed.Channel.Item); i++ {
-		_, err := s.db.GetPostByUrl(context.Background(), rssFeed.Channel.Item[i].Link)
+	for i := 0; i < len(feeds); i++ {
+		// determine the next feed to fetch
+		dbFeed, err := s.db.GetNextFeedToFetch(context.Background())
 		if err != nil {
-			println("Creating new post entry...")
-			params := database.CreatePostParams{
-				ID:          uuid.New(),
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-				Title:       rssFeed.Channel.Item[i].Title,
-				Url:         rssFeed.Channel.Item[i].Link,
-				Description: rssFeed.Channel.Item[i].Description,
-				PublishedAt: rssFeed.Channel.Item[i].PubDate,
-				FeedID:      dbFeed.ID,
-			}
-			_, err := s.db.CreatePost(context.Background(), params)
+			log.Fatal(err)
+		}
+
+		// fetch current state of feed
+		fmt.Printf("Fetching from %v\n", dbFeed.Name)
+		rssFeed, err := fetchFeed(context.Background(), dbFeed.Url)
+		if err != nil {
+			log.Println(err)
+		}
+
+		// mark the feed as fetched
+		s.db.MarkFeedFetched(context.Background(), dbFeed.ID)
+
+		// create posts table entries for any posts that dont have entries already
+		for i := 0; i < len(rssFeed.Channel.Item); i++ {
+			_, err := s.db.GetPostByUrl(context.Background(), rssFeed.Channel.Item[i].Link)
 			if err != nil {
-				println(err)
+				println("Creating new post entry...")
+				params := database.CreatePostParams{
+					ID:          uuid.New(),
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+					Title:       rssFeed.Channel.Item[i].Title,
+					Url:         rssFeed.Channel.Item[i].Link,
+					Description: rssFeed.Channel.Item[i].Description,
+					PublishedAt: rssFeed.Channel.Item[i].PubDate,
+					FeedID:      dbFeed.ID,
+				}
+				_, err := s.db.CreatePost(context.Background(), params)
+				if err != nil {
+					println(err)
+				}
+				println(params.Title)
+				println(params.PublishedAt)
+				println(params.Url)
 			}
-			println(params.Title)
-			println(params.Description)
 		}
 	}
 }
