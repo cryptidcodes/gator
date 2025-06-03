@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/cryptidcodes/gatorcli/internal/config"
-	"github.com/cryptidcodes/gatorcli/internal/database"
+	"github.com/cryptidcodes/gator/internal/config"
+	"github.com/cryptidcodes/gator/internal/database"
 
 	_ "github.com/lib/pq"
 )

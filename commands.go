@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/cryptidcodes/gatorcli/internal/database"
+	"github.com/cryptidcodes/gator/internal/database"
 )
 
 type command struct {

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cryptidcodes/gatorcli/internal/database"
+	"github.com/cryptidcodes/gator/internal/database"
 	"github.com/google/uuid"
 )
 
