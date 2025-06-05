@@ -170,5 +170,68 @@ The config file should look like this:
 }
 ```
 
-Later on, gator will edit the file to use the current user's name to associate that user with the feeds they add.
+Once you have completed this step, you are ready to start using gator!
 
+___
+
+## Commands
+
+Here are the commands available to gator users:
+
+### Users
+
+1. register: registers a new user to the database and logs that user in. Usage:
+
+```
+gator register <username>
+```
+
+2. login: logs in a registered user. Usage:
+
+```
+gator login <username>
+```
+
+3. users: prints a list of all users of the database to the console. Usage:
+
+```
+gator users
+```
+
+### Feeds
+
+1. addfeed: adds a feed source to the database. Usage:
+
+```
+gator addfeed <feed name> <feed url>
+```
+
+2. feeds: prints a list of feeds in the database to the console. Usage:
+
+```
+gator feeds
+```
+
+3. follow: adds a feed to the logged in user's following list. Usage:
+
+```
+gator follow <feed url>
+```
+
+4. following: prints a list of feeds the logged in user is following. Usage:
+
+```
+gator following
+```
+
+5. unfollow: removes a feed from the logged in user's following list. Usage:
+
+```
+gator unfollow <feed url>
+```
+
+6. browse: lets the user browse the the most recent posts in their feed. Optionally, set a limit of posts to be shown (default 2 posts). Usage:
+
+```
+gator browse <(optional) limit>
+```
