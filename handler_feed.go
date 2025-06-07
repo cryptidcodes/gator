@@ -32,28 +32,22 @@ type RSSItem struct {
 }
 
 func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
-	//println("Attempting to fetch feed...")
-	//println("Creating new HTTP request...")
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
 	}
-	//println("Setting header...")
 	req.Header.Set("User-Agent", "gator")
 
 	client := &http.Client{}
-	//println("Executing HTTP request...")
 	res, err := client.Do(req)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
 	}
-	//println("Reading request data...")
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
 	}
 	var result RSSFeed
-	//println("Unmarshalling...")
 	err = xml.Unmarshal(data, &result)
 	if err != nil {
 		return &RSSFeed{}, fmt.Errorf("error: %v", err)
@@ -72,11 +66,8 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) != 2 {
 		log.Fatal("syntax: addfeed requires 2 args")
 	}
-	println("Adding new feed to database...")
-	println("Creating new UUID...")
 	newID := uuid.New()
 
-	println("Creating new feed...")
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID:        newID,
 		CreatedAt: time.Now(),
@@ -89,7 +80,6 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 		return err
 	}
 
-	println("Retrieving feed from database...")
 	feed, err = s.db.GetFeedByID(context.Background(), newID)
 
 	if err != nil {
@@ -140,12 +130,10 @@ func handlerFollow(s *state, cmd command, user database.User) error {
 		log.Fatal("syntax: follow requires 1 arg (url)")
 	}
 
-	println("Retrieving desired feed...")
 	feed, err := s.db.GetFeedByUrl(context.Background(), cmd.Args[0])
 	if err != nil {
 		return err
 	}
-	println("Setting feed follow parameters...")
 	params := database.CreateFeedFollowParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
@@ -153,7 +141,6 @@ func handlerFollow(s *state, cmd command, user database.User) error {
 		FeedID:    feed.ID,
 		UserID:    user.ID,
 	}
-	println("Creating feed_follows row...")
 	row, err := s.db.CreateFeedFollow(context.Background(), params)
 	if err != nil {
 		return err
@@ -244,7 +231,6 @@ func scrapeFeeds(s *state) {
 		for i := 0; i < len(rssFeed.Channel.Item); i++ {
 			_, err := s.db.GetPostByUrl(context.Background(), rssFeed.Channel.Item[i].Link)
 			if err != nil {
-				println("Creating new post entry...")
 				params := database.CreatePostParams{
 					ID:          uuid.New(),
 					CreatedAt:   time.Now(),
