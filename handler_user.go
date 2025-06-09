@@ -74,12 +74,11 @@ func handlerReset(s *state, cmd command) error {
 }
 
 func handlerGetUsers(s *state, cmd command) error {
-	println("Getting users...")
 	users, err := s.db.GetUsers(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	println("Printing user names...")
+	println("Registered users:")
 	for i := 0; i < len(users); i++ {
 		username := users[i].Name
 		if username == s.cfg.CurrentUserName {

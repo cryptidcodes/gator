@@ -146,9 +146,7 @@ func handlerFollow(s *state, cmd command, user database.User) error {
 		return err
 	}
 
-	println("Feed followed:")
-	println(row.FeedName)
-	println(row.UserName)
+	fmt.Printf("%v followed: %v\n", row.UserName, row.FeedName)
 	return nil
 }
 
@@ -292,7 +290,7 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 		println(row[i].Title)
 		println(row[i].PublishedAt)
 		println(row[i].Url)
-		println(row[i].Description)
+		// println(row[i].Description)
 	}
 	return nil
 }
